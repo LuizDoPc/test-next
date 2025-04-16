@@ -61,4 +61,12 @@ jobs:
           fi
           
           # Make files publicly accessible
-          gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME 
+          gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME
+          
+          # Create a custom 404.html that redirects to index.html
+          echo '<!DOCTYPE html><html><head><script>window.location.href = "/";</script></head><body>Redirecting...</body></html>' > 404.html
+          gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp 404.html gs://$GCP_BUCKET_NAME/404.html
+          
+          # Set up CORS configuration for the bucket
+          echo '[{"origin": ["*"],"method": ["GET"],"responseHeader": ["Content-Type"],"maxAgeSeconds": 3600}]' > cors.json
+          gsutil cors set cors.json gs://$GCP_BUCKET_NAME 
