@@ -9,11 +9,9 @@ const nextConfig: NextConfig = {
     domains: ["storage.googleapis.com"]
   },
   trailingSlash: true,
-  // Ensure all assets are properly prefixed
   webpack: (config) => {
     return config;
   },
-  // Configure headers to prevent caching
   async headers() {
     return [
       {

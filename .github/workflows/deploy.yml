@@ -34,31 +34,24 @@ jobs:
 
       - name: Deploy to GCS
         run: |
-          # Create bucket if it doesn't exist
           gsutil mb -p $GCP_PROJECT_ID gs://$GCP_BUCKET_NAME || true
           
-          # Configure bucket for static website hosting
           gsutil web set -m index.html -e 404.html gs://$GCP_BUCKET_NAME
           
-          # Upload HTML files with no cache
           if [ -d "out" ]; then
             find out -name "*.html" -exec gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp {} gs://$GCP_BUCKET_NAME/ \;
           fi
           
-          # Upload _next directory with 1-hour cache
           if [ -d "out/_next" ]; then
             gsutil -m -h "Cache-Control:public,max-age=3600" cp -r out/_next gs://$GCP_BUCKET_NAME/_next/
           fi
           
-          # Upload static assets with 1-day cache
           if [ -d "out" ]; then
             find out -type f \( -name "*.ico" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.svg" -o -name "*.woff" -o -name "*.woff2" \) -exec gsutil -m -h "Cache-Control:public,max-age=86400" cp {} gs://$GCP_BUCKET_NAME/ \;
           fi
           
-          # Upload public directory if it exists
           if [ -d "public" ]; then
             gsutil -m -h "Cache-Control:public,max-age=86400" cp -r public/* gs://$GCP_BUCKET_NAME/
           fi
           
-          # Make files publicly accessible
           gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME 
