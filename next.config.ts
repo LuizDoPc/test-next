@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export",
+  assetPrefix: "https://storage.googleapis.com/instant-shard-437919-n5-static-site",
   basePath: "",
   images: {
     unoptimized: true,
