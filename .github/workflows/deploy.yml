@@ -42,7 +42,13 @@ jobs:
           
           # Upload HTML files with no cache
           if [ -d "out" ]; then
-            find out -name "*.html" -exec gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp {} gs://$GCP_BUCKET_NAME/ \;
+            # First upload index.html to root
+            gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp out/index.html gs://$GCP_BUCKET_NAME/
+            
+            # Create a copy of index.html for each route
+            for route in $(find out -type f -name "*.html" | grep -v "index.html"); do
+              gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp out/index.html gs://$GCP_BUCKET_NAME/${route#out/}
+            done
           fi
           
           # Upload _next directory with 1-hour cache
@@ -62,10 +68,6 @@ jobs:
           
           # Make files publicly accessible
           gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME
-          
-          # Create a custom 404.html that redirects to index.html
-          echo '<!DOCTYPE html><html><head><script>window.location.href = "/";</script></head><body>Redirecting...</body></html>' > 404.html
-          gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp 404.html gs://$GCP_BUCKET_NAME/404.html
           
           # Set up CORS configuration for the bucket
           echo '[{"origin": ["*"],"method": ["GET"],"responseHeader": ["Content-Type"],"maxAgeSeconds": 3600}]' > cors.json
