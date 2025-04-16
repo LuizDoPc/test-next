@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "npm run build && cd terraform && terraform apply -var='project_id=instant-shard-437919-n5' --auto-approve"
   },
   "dependencies": {
     "react": "^19.0.0",
