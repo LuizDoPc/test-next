@@ -41,8 +41,17 @@ jobs:
           gsutil web set -m index.html -e 404.html gs://$GCP_BUCKET_NAME
           
           # Upload files with cache control
-          gsutil -m cp -r out/* gs://$GCP_BUCKET_NAME/
-          gsutil -m cp -r public/* gs://$GCP_BUCKET_NAME/ || true
+          # HTML files - no cache
+          gsutil -m -h "Cache-Control:no-cache,no-store,must-revalidate" cp -r out/*.html gs://$GCP_BUCKET_NAME/
+          
+          # JS and CSS files - cache for 1 hour
+          gsutil -m -h "Cache-Control:public,max-age=3600" cp -r out/_next gs://$GCP_BUCKET_NAME/_next/
+          
+          # Static assets - cache for 1 day
+          gsutil -m -h "Cache-Control:public,max-age=86400" cp -r out/*.{ico,png,jpg,jpeg,gif,svg,woff,woff2} gs://$GCP_BUCKET_NAME/
+          
+          # Upload public files with appropriate cache control
+          gsutil -m -h "Cache-Control:public,max-age=86400" cp -r public/* gs://$GCP_BUCKET_NAME/ || true
           
           # Make files publicly accessible
           gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME 
