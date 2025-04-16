@@ -1,0 +1,48 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_BUCKET_NAME: ${{ secrets.GCP_BUCKET_NAME }}
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Configure GCP credentials
+        run: |
+          echo "$GCP_SA_KEY" > service-account.json
+          gcloud auth activate-service-account --key-file=service-account.json
+          gcloud config set project $GCP_PROJECT_ID
+
+      - name: Deploy to GCS
+        run: |
+          # Create bucket if it doesn't exist
+          gsutil mb -p $GCP_PROJECT_ID gs://$GCP_BUCKET_NAME || true
+          
+          # Configure bucket for static website hosting
+          gsutil web set -m index.html -e 404.html gs://$GCP_BUCKET_NAME
+          
+          # Upload files with cache control
+          gsutil -m cp -r out/* gs://$GCP_BUCKET_NAME/
+          gsutil -m cp -r public/* gs://$GCP_BUCKET_NAME/ || true
+          
+          # Make files publicly accessible
+          gsutil iam ch allUsers:objectViewer gs://$GCP_BUCKET_NAME 
